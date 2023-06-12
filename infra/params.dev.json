@@ -3,13 +3,13 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "location": {
-            "value": "northeurope"
+            "value": "canadacentral"
         },
         "environment": {
             "value": "dev"
         },
         "prefix": {
-            "value": "dmz"
+            "value": "plz230612"
         },
         "tags": {
             "value": {}
@@ -38,7 +38,7 @@
             ]
         },
         "firewallTier": {
-            "value": "Premium"
+            "value": "Standard"
         },
         "firewallPolicyId": {
             "value": ""

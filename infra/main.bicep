@@ -69,8 +69,8 @@ param privateDnsZoneIdSynapse string = ''
 // Variables
 var name = toLower('${prefix}-${environment}')
 var tagsDefault = {
-  Owner: 'Data Management and Analytics Scenario'
-  Project: 'Data Management and Analytics Scenario'
+  Owner: 'Hamood Aleem'
+  Project: 'Platform Landing Zone'
   Environment: environment
   Toolkit: 'bicep'
   Name: name
@@ -104,131 +104,131 @@ module networkServices 'modules/network.bicep' = {
 }
 
 // Private DNS zones
-resource globalDnsResourceGroup 'Microsoft.Resources/resourceGroups@2021-01-01' = {
-  name: '${name}-global-dns'
-  location: location
-  tags: tagsJoined
-  properties: {}
-}
+// resource globalDnsResourceGroup 'Microsoft.Resources/resourceGroups@2021-01-01' = {
+//   name: '${name}-global-dns'
+//   location: location
+//   tags: tagsJoined
+//   properties: {}
+// }
 
-module globalDnsZones 'modules/services/privatednszones.bicep' = if (enableDnsAndFirewallDeployment) {
-  name: 'globalDnsZones'
-  scope: globalDnsResourceGroup
-  params: {
-    tags: tagsJoined
-    vnetId: networkServices.outputs.vnetId
-  }
-}
+// module globalDnsZones 'modules/services/privatednszones.bicep' = if (enableDnsAndFirewallDeployment) {
+//   name: 'globalDnsZones'
+//   scope: globalDnsResourceGroup
+//   params: {
+//     tags: tagsJoined
+//     vnetId: networkServices.outputs.vnetId
+//   }
+// }
 
 // Governance resources
-resource governanceResourceGroup 'Microsoft.Resources/resourceGroups@2021-01-01' = {
-  name: '${name}-governance'
-  location: location
-  tags: tagsJoined
-  properties: {}
-}
+// resource governanceResourceGroup 'Microsoft.Resources/resourceGroups@2021-01-01' = {
+//   name: '${name}-governance'
+//   location: location
+//   tags: tagsJoined
+//   properties: {}
+// }
 
-module governanceResources 'modules/governance.bicep' = {
-  name: 'governanceResources'
-  scope: governanceResourceGroup
-  params: {
-    location: location
-    prefix: name
-    tags: tagsJoined
-    subnetId: networkServices.outputs.serviceSubnet
-    privateDnsZoneIdPurview: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdPurview : privateDnsZoneIdPurview
-    privateDnsZoneIdPurviewPortal: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdPurviewPortal : privateDnsZoneIdPurviewPortal
-    privateDnsZoneIdStorageBlob: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdBlob : privateDnsZoneIdBlob
-    privateDnsZoneIdStorageQueue: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdQueue : privateDnsZoneIdQueue
-    privateDnsZoneIdEventhubNamespace: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdNamespace : privateDnsZoneIdNamespace
-    privateDnsZoneIdKeyVault: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdKeyVault : privateDnsZoneIdKeyVault
-  }
-}
+// module governanceResources 'modules/governance.bicep' = {
+//   name: 'governanceResources'
+//   scope: governanceResourceGroup
+//   params: {
+//     location: location
+//     prefix: name
+//     tags: tagsJoined
+//     subnetId: networkServices.outputs.serviceSubnet
+//     privateDnsZoneIdPurview: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdPurview : privateDnsZoneIdPurview
+//     privateDnsZoneIdPurviewPortal: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdPurviewPortal : privateDnsZoneIdPurviewPortal
+//     privateDnsZoneIdStorageBlob: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdBlob : privateDnsZoneIdBlob
+//     privateDnsZoneIdStorageQueue: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdQueue : privateDnsZoneIdQueue
+//     privateDnsZoneIdEventhubNamespace: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdNamespace : privateDnsZoneIdNamespace
+//     privateDnsZoneIdKeyVault: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdKeyVault : privateDnsZoneIdKeyVault
+//   }
+// }
 
 // Container resources
-resource containerResourceGroup 'Microsoft.Resources/resourceGroups@2021-01-01' = {
-  name: '${name}-container'
-  location: location
-  tags: tagsJoined
-  properties: {}
-}
+// resource containerResourceGroup 'Microsoft.Resources/resourceGroups@2021-01-01' = {
+//   name: '${name}-container'
+//   location: location
+//   tags: tagsJoined
+//   properties: {}
+// }
 
-module containerResources 'modules/container.bicep' = {
-  name: 'containerResources'
-  scope: containerResourceGroup
-  params: {
-    location: location
-    prefix: name
-    tags: tagsJoined
-    subnetId: networkServices.outputs.serviceSubnet
-    privateDnsZoneIdContainerRegistry: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdContainerRegistry : privateDnsZoneIdContainerRegistry
-  }
-}
+// module containerResources 'modules/container.bicep' = {
+//   name: 'containerResources'
+//   scope: containerResourceGroup
+//   params: {
+//     location: location
+//     prefix: name
+//     tags: tagsJoined
+//     subnetId: networkServices.outputs.serviceSubnet
+//     privateDnsZoneIdContainerRegistry: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdContainerRegistry : privateDnsZoneIdContainerRegistry
+//   }
+// }
 
 // Consumption resources
-resource consumptionResourceGroup 'Microsoft.Resources/resourceGroups@2021-01-01' = {
-  name: '${name}-consumption'
-  location: location
-  tags: tagsJoined
-  properties: {}
-}
+// resource consumptionResourceGroup 'Microsoft.Resources/resourceGroups@2021-01-01' = {
+//   name: '${name}-consumption'
+//   location: location
+//   tags: tagsJoined
+//   properties: {}
+// }
 
-module consumptionResources 'modules/consumption.bicep' = {
-  name: 'consumptionResources'
-  scope: consumptionResourceGroup
-  params: {
-    location: location
-    prefix: name
-    tags: tagsJoined
-    subnetId: networkServices.outputs.serviceSubnet
-    privateDnsZoneIdSynapseprivatelinkhub: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdSynapse : privateDnsZoneIdSynapse
-    privateDnsZoneIdAnalysis: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdAnalysis : ''
-    privateDnsZoneIdPbiDedicated: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdPbiDedicated : ''
-    privateDnsZoneIdPowerQuery: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdPowerQuery : ''
-  }
-}
+// module consumptionResources 'modules/consumption.bicep' = {
+//   name: 'consumptionResources'
+//   scope: consumptionResourceGroup
+//   params: {
+//     location: location
+//     prefix: name
+//     tags: tagsJoined
+//     subnetId: networkServices.outputs.serviceSubnet
+//     privateDnsZoneIdSynapseprivatelinkhub: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdSynapse : privateDnsZoneIdSynapse
+//     privateDnsZoneIdAnalysis: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdAnalysis : ''
+//     privateDnsZoneIdPbiDedicated: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdPbiDedicated : ''
+//     privateDnsZoneIdPowerQuery: enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdPowerQuery : ''
+//   }
+// }
 
 // Automation services
-resource automationResourceGroup 'Microsoft.Resources/resourceGroups@2021-01-01' = {
-  name: '${name}-automation'
-  location: location
-  tags: tagsJoined
-  properties: {}
-}
+// resource automationResourceGroup 'Microsoft.Resources/resourceGroups@2021-01-01' = {
+//   name: '${name}-automation'
+//   location: location
+//   tags: tagsJoined
+//   properties: {}
+// }
 
-module automationResources 'modules/automation.bicep' = {
-  name: 'automationResources'
-  scope: automationResourceGroup
-  params: {
-    location: location
-    tags: tagsJoined
-    prefix: name
-    purviewId: governanceResources.outputs.purviewId
-    purviewRootCollectionAdminObjectIds: purviewRootCollectionAdminObjectIds
-  }
-}
+// module automationResources 'modules/automation.bicep' = {
+//   name: 'automationResources'
+//   scope: automationResourceGroup
+//   params: {
+//     location: location
+//     tags: tagsJoined
+//     prefix: name
+//     purviewId: governanceResources.outputs.purviewId
+//     purviewRootCollectionAdminObjectIds: purviewRootCollectionAdminObjectIds
+//   }
+// }
 
 // Management services
-resource managementResourceGroup 'Microsoft.Resources/resourceGroups@2021-01-01' = {
-  name: '${name}-mgmt'
-  location: location
-  tags: tagsJoined
-  properties: {}
-}
+// resource managementResourceGroup 'Microsoft.Resources/resourceGroups@2021-01-01' = {
+//   name: '${name}-mgmt'
+//   location: location
+//   tags: tagsJoined
+//   properties: {}
+// }
 
 // Outputs
 output vnetId string = networkServices.outputs.vnetId
 output firewallPrivateIp string = networkServices.outputs.firewallPrivateIp
-output purviewId string = governanceResources.outputs.purviewId
-output purviewManagedStorageId string = governanceResources.outputs.purviewManagedStorageId
-output purviewManagedEventHubId string = governanceResources.outputs.purviewManagedEventHubId
-output privateDnsZoneIdKeyVault string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdKeyVault : ''
-output privateDnsZoneIdDataFactory string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdDataFactory : ''
-output privateDnsZoneIdDataFactoryPortal string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdDataFactoryPortal : ''
-output privateDnsZoneIdBlob string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdBlob : ''
-output privateDnsZoneIdDfs string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdDfs : ''
-output privateDnsZoneIdSqlServer string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdSqlServer : ''
-output privateDnsZoneIdMySqlServer string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdMySqlServer : ''
-output privateDnsZoneIdNamespace string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdNamespace : ''
-output privateDnsZoneIdSynapseDev string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdSynapseDev : ''
-output privateDnsZoneIdSynapseSql string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdSynapseSql : ''
+// output purviewId string = governanceResources.outputs.purviewId
+// output purviewManagedStorageId string = governanceResources.outputs.purviewManagedStorageId
+// output purviewManagedEventHubId string = governanceResources.outputs.purviewManagedEventHubId
+// output privateDnsZoneIdKeyVault string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdKeyVault : ''
+// output privateDnsZoneIdDataFactory string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdDataFactory : ''
+// output privateDnsZoneIdDataFactoryPortal string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdDataFactoryPortal : ''
+// output privateDnsZoneIdBlob string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdBlob : ''
+// output privateDnsZoneIdDfs string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdDfs : ''
+// output privateDnsZoneIdSqlServer string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdSqlServer : ''
+// output privateDnsZoneIdMySqlServer string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdMySqlServer : ''
+// output privateDnsZoneIdNamespace string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdNamespace : ''
+// output privateDnsZoneIdSynapseDev string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdSynapseDev : ''
+// output privateDnsZoneIdSynapseSql string = enableDnsAndFirewallDeployment ? globalDnsZones.outputs.privateDnsZoneIdSynapseSql : ''
