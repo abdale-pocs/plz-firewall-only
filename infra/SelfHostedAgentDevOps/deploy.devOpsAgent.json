@@ -1,0 +1,321 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Specifies the location for all resources."
+            }
+        },
+        "vmssName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the name of the virtual machine scale set."
+            }
+        },
+        "vmssSkuTier": {
+            "type": "string",
+            "allowedValues": [
+                "Standard",
+                "Basic"
+            ],
+            "defaultValue": "Standard",
+            "metadata": {
+                "description": "Specifies the SKU tier of the virtual machine scale set."
+            }
+        },
+        "vmssSkuName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the SKU name of the virtual machine scale set."
+            }
+        },
+        "vmssSkuCapacity": {
+            "type": "int",
+            "minValue": 0,
+            "defaultValue": 1,
+            "metadata": {
+                "description": "Specifies the SKU capacity of the virtual machine scale set."
+            }
+        },
+        "vmssAdminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the admin username of the virtual machine scale set."
+            }
+        },
+        "vmssAdminKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Specifies the admin ssh key of the virtual machine scale set."
+            }
+        },
+        "subnetId": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the resource Id of the subnet to which the virtual machine should connect."
+            }
+        }
+    },
+    "variables": {
+        "location": "[parameters('location')]",
+        "vmssName": "[parameters('vmssName')]",
+        "vmssSkuTier": "[parameters('vmssSkuTier')]",
+        "vmssSkuName": "[parameters('vmssSkuName')]",
+        "vmssSkuCapacity": "[parameters('vmssSkuCapacity')]",
+        "vmssAdminUsername": "[parameters('vmssAdminUsername')]",
+        "vmssAdminKey": "[parameters('vmssAdminKey')]",
+        "subnetId": "[parameters('subnetId')]"
+    },
+    "resources": [
+        {
+            "name": "[concat(variables('vmssName'), '-publicip')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2020-05-01",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static",
+                "publicIPAddressVersion": "IPv4",
+                "dnsSettings": {
+                    "domainNameLabel": "[toLower(variables('vmssName'))]"
+                },
+                // "ddosSettings": {
+                //     "protectionCoverage": "Standard",
+                //     "protectedIP": true
+                // },
+                "ipTags": []
+            }
+        },
+        {
+            "name": "[concat(variables('vmssName'), '-lb')]",
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2020-05-01",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmssName'), '-publicip'))]"
+            ],
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "loadBalancerFrontEnd",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmssName'), '-publicip'))]"
+                            }
+                            // "subnet": {
+                            //     "id": "[variables('subnetId')]"
+                            // }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[concat(variables('vmssName'), '-backendPool')]"
+                    }
+                ],
+                "inboundNatPools": [
+                    {
+                        "name": "[concat(variables('vmssName'), '-natPool')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', concat(variables('vmssName'), '-lb'), 'loadBalancerFrontEnd')]"
+                            },
+                            "protocol": "Tcp",
+                            "frontendPortRangeStart": 50000,
+                            "frontendPortRangeEnd": 50099,
+                            "backendPort": 22,
+                            "idleTimeoutInMinutes": 4
+                        }
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "ProbeRule",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', concat(variables('vmssName'), '-lb'), 'loadBalancerFrontEnd')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', concat(variables('vmssName'), '-lb'), concat(variables('vmssName'), '-backendPool'))]"
+                            },
+                            "protocol": "Udp",
+                            "frontendPort": 53,
+                            "backendPort": 53,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 5,
+                            "probe": {
+                                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', concat(variables('vmssName'), '-lb'), concat(variables('vmssName'), '-probe'))]"
+                            }
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "[concat(variables('vmssName'), '-probe')]",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": 22,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[variables('vmssName')]",
+            "type": "Microsoft.Compute/virtualMachineScaleSets",
+            "apiVersion": "2019-07-01",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/loadBalancers', concat(variables('vmssName'), '-lb'))]"
+            ],
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "sku": {
+                "name": "[variables('vmssSkuName')]",
+                "tier": "[variables('vmssSkuTier')]",
+                "capacity": "[variables('vmssSkuCapacity')]"
+            },
+            "zones": [
+                "1",
+                "2"
+            ],
+            "properties": {
+                "additionalCapabilities": {},
+                "automaticRepairsPolicy": {},
+                "doNotRunExtensionsOnOverprovisionedVMs": false,
+                "overprovision": false,
+                "platformFaultDomainCount": 1,
+                "zoneBalance": true,
+                "scaleInPolicy": {
+                    "rules": [
+                        "Default"
+                    ]
+                },
+                "singlePlacementGroup": false,
+                "upgradePolicy": {
+                    "mode": "Manual"
+                },
+                "virtualMachineProfile": {
+                    "priority": "Regular",
+                    "osProfile": {
+                        "computerNamePrefix": "[take(variables('vmssName'), 9)]",
+                        "adminUsername": "[variables('vmssAdminUsername')]",
+                        "linuxConfiguration": {
+                            "disablePasswordAuthentication": true,
+                            "ssh": {
+                                "publicKeys": [
+                                    {
+                                        "path": "[concat('/home/', variables('vmssAdminUsername'), '/.ssh/authorized_keys')]",
+                                        "keyData": "[variables('vmssAdminKey')]"
+                                    }
+                                ]
+                            },
+                            "provisionVMAgent": true
+                        },
+                        "secrets": [],
+                        "allowExtensionOperations": true
+                    },
+                    "networkProfile": {
+                        "networkInterfaceConfigurations": [
+                            {
+                                "name": "[concat(variables('vmssName'), '-nic')]",
+                                "properties": {
+                                    "primary": true,
+                                    "enableAcceleratedNetworking": false,
+                                    // "networkSecurityGroup": {
+                                    //     "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('vmssName'), '-nsg'))]"
+                                    // },
+                                    "dnsSettings": {},
+                                    "enableIPForwarding": true,
+                                    "ipConfigurations": [
+                                        {
+                                            "name": "[concat(variables('vmssName'), '-ipConfig')]",
+                                            "properties": {
+                                                "primary": true,
+                                                "privateIPAddressVersion": "IPv4",
+                                                "subnet": {
+                                                    "id": "[variables('subnetId')]"
+                                                },
+                                                "loadBalancerBackendAddressPools": [
+                                                    {
+                                                        "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', concat(variables('vmssName'), '-lb'), concat(variables('vmssName'), '-backendPool'))]"
+                                                    }
+                                                ],
+                                                "loadBalancerInboundNatPools": [
+                                                    {
+                                                        "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatPools', concat(variables('vmssName'), '-lb'), concat(variables('vmssName'), '-natPool'))]"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "storageProfile": {
+                        "osDisk": {
+                            "osType": "Linux",
+                            "diffDiskSettings": {
+                                "option": "Local"
+                            },
+                            "createOption": "FromImage",
+                            "caching": "ReadOnly",
+                            "managedDisk": {
+                                "storageAccountType": "Standard_LRS"
+                            },
+                            "diskSizeGB": 30
+                        },
+                        "imageReference": {
+                            "publisher": "Canonical",
+                            "offer": "UbuntuServer",
+                            "sku": "18.04-LTS",
+                            "version": "latest"
+                        }
+                    },
+                    "extensionProfile": {
+                        "extensions": [
+                            // {
+                            //     "type": "Microsoft.Compute/virtualMachines/extensions",
+                            //     "name": "[concat(variables('vmssName'),'-AdoExtension')]",
+                            //     "properties": {
+                            //         "publisher": "Microsoft.VisualStudio.Services",
+                            //         "type": "TeamServicesAgentLinux",
+                            //         "typeHandlerVersion": "1.21",
+                            //         "autoUpgradeMinorVersion": true,
+                            //         "settings": {
+                            //             "isPipelinesAgent": true,
+                            //             "agentFolder": "/agent",
+                            //             "agentDownloadUrl": "https://vstsagentpackage.azureedge.net/agent/2.181.1/vsts-agent-linux-x64-2.181.1.tar.gz",
+                            //             "enableScriptDownloadUrl": "https://vstsagenttools.blob.core.windows.net/tools/ElasticPools/Linux/6/enableagent.sh",
+                            //             "token": "",
+                            //             ""
+                            //             "VSTSAccountName": "[variables('devOpsOrgName')]",
+                            //             "TeamProject": "[variables('devOpsProjectName')]",
+                            //             "DeploymentGroup": "[variables('devOpsDeploymentGroupName')]",
+                            //             "AgentName": "[variables('devOpsAgentName')]",
+                            //             "Tags": "[variables('devOpsAgentTags')]"
+                            //         },
+                            //         "protectedSettings": {
+                            //             "PATToken": "[variables('devOpsPatToken')]"
+                            //         }
+                            //     }
+                            // }
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}
