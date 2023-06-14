@@ -20,8 +20,8 @@ pr:
       - .ado/workflows/dataManagementZoneDeployment.yml
 
 variables:
-  AZURE_RESOURCE_MANAGER_CONNECTION_NAME: "platform-landing-zone-service-connection" # Update to '{yourResourceManagerConnectionName}'
-  AZURE_SUBSCRIPTION_ID: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"                     # Update to '{yourDataManagementZoneSubscriptionId}'
+  AZURE_RESOURCE_MANAGER_CONNECTION_NAME: "{platform-landing-zone-service-connection}" # Update to '{yourResourceManagerConnectionName}'
+  AZURE_SUBSCRIPTION_ID: "{xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}"                     # Update to '{yourDataManagementZoneSubscriptionId}'
   AZURE_LOCATION: "canadacentral"                                                     # Update to '{yourRegionName}'
 
 stages:
@@ -58,7 +58,7 @@ stages:
               location: ${{ variables.AZURE_LOCATION }}
               templateLocation: "Linked artifact"
               csmFile: "$(System.DefaultWorkingDirectory)/infra/main.json"
-              csmParametersFile: "$(System.DefaultWorkingDirectory)/infra/params.dev.json"
+              csmParametersFile: "$(System.DefaultWorkingDirectory)/infra/params.json"
               deploymentMode: "Validation"
 
           # Deploy Data Management Zone - what-if
@@ -80,7 +80,7 @@ stages:
                   --subscription ${{ variables.AZURE_SUBSCRIPTION_ID }} `
                   --exclude-change-types Ignore NoChange Unsupported `
                   --template-file "$(System.DefaultWorkingDirectory)/infra/main.json" `
-                  --parameters "$(System.DefaultWorkingDirectory)/infra/params.dev.json" `
+                  --parameters "$(System.DefaultWorkingDirectory)/infra/params.json" `
                   --result-format "FullResourcePayloads"
                 
               powerShellErrorActionPreference: "stop"
@@ -124,5 +124,5 @@ stages:
               location: ${{ variables.AZURE_LOCATION }}
               templateLocation: "Linked artifact"
               csmFile: "$(System.DefaultWorkingDirectory)/infra/main.json"
-              csmParametersFile: "$(System.DefaultWorkingDirectory)/infra/params.dev.json"
+              csmParametersFile: "$(System.DefaultWorkingDirectory)/infra/params.json"
               deploymentMode: "Incremental"
