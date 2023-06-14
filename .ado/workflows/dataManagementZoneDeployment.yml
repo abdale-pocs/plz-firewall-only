@@ -20,8 +20,8 @@ pr:
       - .ado/workflows/dataManagementZoneDeployment.yml
 
 variables:
-  AZURE_RESOURCE_MANAGER_CONNECTION_NAME: "platform-landing-zone" # Update to '{yourResourceManagerConnectionName}'
-  AZURE_SUBSCRIPTION_ID: "0fcc5c01-7a05-4137-9422-590a9f106dd3"                     # Update to '{yourDataManagementZoneSubscriptionId}'
+  AZURE_RESOURCE_MANAGER_CONNECTION_NAME: "platform-landing-zone-service-connection" # Update to '{yourResourceManagerConnectionName}'
+  AZURE_SUBSCRIPTION_ID: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"                     # Update to '{yourDataManagementZoneSubscriptionId}'
   AZURE_LOCATION: "canadacentral"                                                     # Update to '{yourRegionName}'
 
 stages:
@@ -32,7 +32,7 @@ stages:
         displayName: "Validation of IaC templates"
         continueOnError: true
         pool:
-          name: "Maple Ridge VM"
+          name: "self-hosted-vm"
 
         steps:
           # Checkout code
@@ -98,7 +98,7 @@ stages:
         displayName: "Deployment of IaC templates"
         continueOnError: false
         pool:
-          name: "Maple Ridge VM"
+          name: "self-hosted-vm"
 
         steps:
           # Checkout repository
